@@ -73,7 +73,6 @@ function set_target() {
     [ ! -d $SWATCHER_TARGET_DIR ] && mkdir -p $SWATCHER_TARGET_DIR && cd $SWATCHER_TARGET_DIR
 
 	secure_conf
-	ftpd_conf
 
     echo $(tput setaf 2)"saved conf files into $SWATCHER_TARGET_DIR/"$(tput sgr0)
 }
@@ -98,19 +97,6 @@ watchfor /.*COMMAND.*/
          exec "\/usr\/local\/bin\/slack_notify $* > /dev/null 2>&1"
 EOT
 	chmod 0644 $SWATCHER_TARGET_DIR/$SWATCHER_TARGET_FILE
-}
-
-function ftpd_conf() {
-	SWATCHER_TARGET_DIR=/etc/swatcher/target
-	SWATCHER_TARGET_FILE=ftpd.conf
-	cat <<'EOT' | sudo tee $SWATCHER_TARGET_DIR/$SWATCHER_TARGET_FILE
-# logfile /var/log/vsftpd.log
-
-# ftp ログイン
-watchfor /OK LOGIN/
-         exec "\/usr\/local\/bin\/slack_notify $* > /dev/null 2>&1"
-EOT
-	sudo chmod 0644 $SWATCHER_TARGET_DIR/$SWATCHER_TARGET_FILE
 }
 
 function set_notify_script() {
@@ -187,33 +173,9 @@ function set_stop_script() {
     ACTION_SCRIPT_DEST=/etc/init.d
 
     curl $SCRIPT_URL | sudo tee $ACTION_SCRIPT_DEST/stop_swatcher.sh
-    sudo chmod 0755 $ACTION_SCRIPT_DEST/start_swatcher.sh
+    sudo chmod 0755 $ACTION_SCRIPT_DEST/stop_swatcher.sh
 
     echo $(tput setaf 2)"saved into $ACTION_SCRIPT_DEST/stop_swatcher.sh"$(tput sgr0)
-}
-
-function setting_ftp_log() {
-	if [ "$(systemctl is-active --quiet vsftpd && echo 0)" != 0 ]; then
-		echo $(tput setaf 1)"[ERROR] 'vsftpd' doesn't active. or systemctl isn't exist. "$(tput sgr0)
-		return
-	fi
-
-	# デフォルト`/etc/vsftpd.conf`にない場合は`/etc/vsftpd/vsftpd.conf`を探す
-	sudo sed -i -e "s/[#]*xferlog_std_format=YES/xferlog_std_format=NO/g" /etc/vsftpd.conf 2>/dev/null || \
-	sudo sed -i -e "s/[#]*xferlog_std_format=YES/xferlog_std_format=NO/g" /etc/vsftpd/vsftpd.conf
-
-	sudo sed -i -e "s@[#]*xferlog_file=/var/log/xferlog@xferlog_file=xferlog_file=/var/log/vsftpd.log@g" /etc/vsftpd.conf 2>/dev/null || \
-	sudo sed -i -e "s@[#]*xferlog_file=/var/log/xferlog@xferlog_file=/var/log/vsftpd.log@g" /etc/vsftpd/vsftpd.conf
-
-	sudo touch /var/log/vsftpd.log
-
-	sudo systemctl restart vsftpd.service
-}
-
-
-
-function run_swatcher() {
-	curl https://raw.githubusercontent.com/yousan/swatcher/master/etc/swatcher.sh | sudo bash -
 }
 
 # do
@@ -222,7 +184,6 @@ install_swatch
 set_target
 set_config
 set_notify_script
-setting_ftp_log
 set_systemd
 
 
