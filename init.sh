@@ -45,9 +45,8 @@ function set_config() {
 
 cat <<'EOT' | sudo tee $SWATCHER_CONFIG_DIR/$SWATCHER_CONFIG_FILE
 # Targets
-# Now available 'ftp' and 'ssh' only.
+# Now available 'ssh' only.
 # Default is 'true'
-ftp=true
 ssh=true
 
 
