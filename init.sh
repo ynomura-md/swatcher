@@ -28,9 +28,10 @@ function install_swatch() {
         sudo apt upgrade && \
 		sudo apt install swatch
     elif [[ $DISTRIBUTION =~ centos ]]; then
-        yes | \
-        sudo yum update && \
-		sudo yum install swatch
+        #yes | \
+        #sudo yum update && \
+        sudo yum -y install epel-release && \
+    		sudo yum --enablerepo=epel -y install swatch
     else
         echo $(tput setaf 1)"Sorry, I can handle Ubuntu and CentOS only."$(tput sgr0)
         exit 1
